@@ -1,5 +1,4 @@
-﻿
-namespace CourseLibrary.API.Models;
+﻿namespace CourseLibrary.API.Models;
 public class CourseDto
 {
     public Guid Id { get; set; }
