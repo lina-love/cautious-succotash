@@ -1,14 +1,9 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace CourseLibrary.API.Models;
 
-public class CourseForUpdateDto
+public class CourseForUpdateDto : CourseForManipulationDto
 {
-    [Required]
-    [MaxLength(100)]
-    public string Title { get; set; }
-
-    [MaxLength(1500)]
-    public string? Description { get; set; }
+    [Required(ErrorMessage = "You should fill out a description.")]
+    public override string? Description { get => base.Description; set => base.Description = value; }
 }
