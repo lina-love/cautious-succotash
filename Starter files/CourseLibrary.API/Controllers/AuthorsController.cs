@@ -18,11 +18,15 @@ public class AuthorsController : ControllerBase
     private readonly ICourseLibraryRepository _courseLibraryRepository;
     private readonly IMapper _mapper;
     private readonly IPropertyMappingService _propertyMappingService;
+    private readonly IPropertyCheckerService _propertyCheckerService;
+    private readonly ProblemDetailsFactory _problemDetailsFactory;
 
     public AuthorsController(
         ICourseLibraryRepository courseLibraryRepository,
         IMapper mapper,
-        IPropertyMappingService propertyMappingService)
+        IPropertyMappingService propertyMappingService,
+        IPropertyCheckerService propertyCheckerService,
+        ProblemDetailsFactory problemDetailsFactory)
     {
         _courseLibraryRepository = courseLibraryRepository ??
             throw new ArgumentNullException(nameof(courseLibraryRepository));
@@ -30,14 +34,27 @@ public class AuthorsController : ControllerBase
             throw new ArgumentNullException(nameof(mapper));
         _propertyMappingService = propertyMappingService ??
             throw new ArgumentNullException(nameof(propertyMappingService));
+        _propertyCheckerService = propertyCheckerService ??
+            throw new ArgumentNullException(nameof(propertyCheckerService));
+        _problemDetailsFactory = problemDetailsFactory ??
+            throw new ArgumentNullException(nameof(problemDetailsFactory));
     }
 
     [HttpGet(Name = "GetAuthors")]
     [HttpHead]
-    public async Task<ActionResult<IEnumerable<AuthorDto>>> GetAuthors(
+    public async Task<IActionResult> GetAuthors(
         [FromQuery] AuthorsResourceParameters authorsResourceParameters)
     {
-        if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Entities.Author>(authorsResourceParameters.OrderBy))
+        if (!_propertyCheckerService.TypeHasProperties<AuthorDto>(authorsResourceParameters.Fields!))
+        {
+            return BadRequest(
+                _problemDetailsFactory.CreateProblemDetails(HttpContext,
+                    statusCode: 400,
+                    title: $"Not all requested data shapping fields exist on " +
+                    $"the resource: {authorsResourceParameters.Fields}"));
+        }
+
+        if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Entities.Author>(authorsResourceParameters.OrderBy!))
         {
             return BadRequest();
         }
@@ -67,7 +84,7 @@ public class AuthorsController : ControllerBase
         Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
 
         // return them
-        return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
+        return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo).ShapData(authorsResourceParameters.Fields));
     }
 
     private string? CreateAuthorsResourceUri(
@@ -83,7 +100,8 @@ public class AuthorsController : ControllerBase
                     pageSize = authorsResourceParameters.PageSize,
                     mainCategory = authorsResourceParameters.MainCategory,
                     searchQuery = authorsResourceParameters.SearchQuery,
-                    orderBy = authorsResourceParameters.OrderBy
+                    orderBy = authorsResourceParameters.OrderBy,
+                    fields = authorsResourceParameters.Fields
                 }),
             ResourceUriType.NextPage => Url.Link("GetAuthors",
                 new
@@ -92,7 +110,8 @@ public class AuthorsController : ControllerBase
                     pageSize = authorsResourceParameters.PageSize,
                     mainCategory = authorsResourceParameters.MainCategory,
                     searchQuery = authorsResourceParameters.SearchQuery,
-                    orderBy = authorsResourceParameters.OrderBy
+                    orderBy = authorsResourceParameters.OrderBy,
+                    fields = authorsResourceParameters.Fields
                 }),
             _ => Url.Link("GetAuthors",
                 new
@@ -101,14 +120,24 @@ public class AuthorsController : ControllerBase
                     pageSize = authorsResourceParameters.PageSize,
                     mainCategory = authorsResourceParameters.MainCategory,
                     searchQuery = authorsResourceParameters.SearchQuery,
-                    orderBy = authorsResourceParameters.OrderBy
+                    orderBy = authorsResourceParameters.OrderBy,
+                    fields = authorsResourceParameters.Fields
                 }),
         };
     }
 
     [HttpGet("{authorId}", Name = "GetAuthor")]
-    public async Task<ActionResult<AuthorDto>> GetAuthor(Guid authorId)
+    public async Task<IActionResult> GetAuthor(Guid authorId, string? fields)
     {
+        if (!_propertyCheckerService.TypeHasProperties<AuthorDto>(fields))
+        {
+            return BadRequest(
+                _problemDetailsFactory.CreateProblemDetails(HttpContext,
+                    statusCode: 400,
+                    title: $"Not all requested data shapping fields exist on " +
+                    $"the resource: {fields}"));
+        }
+
         // get author from repo
         var authorFromRepo = await _courseLibraryRepository.GetAuthorAsync(authorId);
 
@@ -118,7 +147,7 @@ public class AuthorsController : ControllerBase
         }
 
         // return author
-        return Ok(_mapper.Map<AuthorDto>(authorFromRepo));
+        return Ok(_mapper.Map<AuthorDto>(authorFromRepo).ShapData(fields));
     }
 
     [HttpPost]
