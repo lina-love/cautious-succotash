@@ -1,6 +1,7 @@
 ﻿using CourseLibrary.API.DbContexts;
 using CourseLibrary.API.Entities;
 using CourseLibrary.API.Helpers;
+using CourseLibrary.API.Models;
 using CourseLibrary.API.ResourceParameters;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +10,14 @@ namespace CourseLibrary.API.Services;
 public class CourseLibraryRepository : ICourseLibraryRepository
 {
     private readonly CourseLibraryContext _context;
+    private readonly IPropertyMappingService _propertyMappingService;
 
-    public CourseLibraryRepository(CourseLibraryContext context)
+    public CourseLibraryRepository(
+        CourseLibraryContext context,
+        IPropertyMappingService propertyMappingService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _propertyMappingService = propertyMappingService ?? throw new ArgumentNullException(nameof(propertyMappingService));
     }
 
     public void AddCourse(Guid authorId, Course course)
@@ -53,6 +58,34 @@ public class CourseLibraryRepository : ICourseLibraryRepository
         return await _context.Courses
           .Where(c => c.AuthorId == authorId && c.Id == courseId).FirstOrDefaultAsync();
 #pragma warning restore CS8603 // Possible null reference return.
+    }
+
+    public async Task<PagedList<Course>> GetCoursesAsync(CoursesResourceParameters coursesResourceParameters)
+    {
+        if (coursesResourceParameters == null)
+        {
+            throw new ArgumentNullException(nameof(coursesResourceParameters));
+        }
+
+        var collection = _context.Courses as IQueryable<Course>;
+
+        if (!string.IsNullOrWhiteSpace(coursesResourceParameters.SearchQuery))
+        {
+            var searchQuery = coursesResourceParameters.SearchQuery.Trim();
+
+            collection = collection.Where(c => c.Title == searchQuery);
+        }
+
+        if (!string.IsNullOrWhiteSpace(coursesResourceParameters.OrderBy))
+        {
+            var coursePropertyMappingDictionary = _propertyMappingService.GetPropertyMapping<CourseDto, Course>();
+
+            collection = collection.ApplySort(coursesResourceParameters.OrderBy, coursePropertyMappingDictionary);
+        }
+
+        return await PagedList<Course>.CreateAsync(collection,
+            coursesResourceParameters.PageNumber,
+            coursesResourceParameters.PageSize);
     }
 
     public async Task<IEnumerable<Course>> GetCoursesAsync(Guid authorId)
@@ -143,6 +176,13 @@ public class CourseLibraryRepository : ICourseLibraryRepository
             collection = collection.Where(a => a.MainCategory.Contains(searchQuery)
                 || a.FirstName.Contains(searchQuery)
                 || a.LastName.Contains(searchQuery));
+        }
+
+        if (!string.IsNullOrWhiteSpace(authorsResourceParameters.OrderBy))
+        {
+            var authorPropertyMappingDictionary = _propertyMappingService.GetPropertyMapping<AuthorDto, Author>();
+
+            collection = collection.ApplySort(authorsResourceParameters.OrderBy, authorPropertyMappingDictionary);
         }
 
         return await PagedList<Author>.CreateAsync(collection,

@@ -60,31 +60,67 @@ public class CourseLibraryContext : DbContext
             );
 
         modelBuilder.Entity<Course>().HasData(
-           new Course("Commandeering a Ship Without Getting Caught")
-           {
-               Id = Guid.Parse("5b1c2b4d-48c7-402a-80c3-cc796ad49c6b"),
-               AuthorId = Guid.Parse("d28888e9-2ba9-473a-a40f-e38cb54f9b35"),
-               Description = "Commandeering a ship in rough waters isn't easy.  Commandeering it without getting caught is even harder.  In this course you'll learn how to sail away and avoid those pesky musketeers."
-           },
-           new Course("Overthrowing Mutiny")
-           {
-               Id = Guid.Parse("d8663e5e-7494-4f81-8739-6e0de1bea7ee"),
-               AuthorId = Guid.Parse("d28888e9-2ba9-473a-a40f-e38cb54f9b35"),
-               Description = "In this course, the author provides tips to avoid, or, if needed, overthrow pirate mutiny."
-           },
-           new Course("Avoiding Brawls While Drinking as Much Rum as You Desire")
-           {
-               Id = Guid.Parse("d173e20d-159e-4127-9ce9-b0ac2564ad97"),
-               AuthorId = Guid.Parse("da2fd609-d754-4feb-8acd-c4f9ff13ba96"),
-               Description = "Every good pirate loves rum, but it also has a tendency to get you into trouble.  In this course you'll learn how to avoid that.  This new exclusive edition includes an additional chapter on how to run fast without falling while drunk."
-           },
-           new Course("Singalong Pirate Hits")
-           {
-               Id = Guid.Parse("40ff5488-fdab-45b5-bc3a-14302d59869a"),
-               AuthorId = Guid.Parse("2902b665-1190-4c70-9915-b9c2d7680450"),
-               Description = "In this course you'll learn how to sing all-time favourite pirate songs without sounding like you actually know the words or how to hold a note."
-           }
-           );
+            new Course("Sword Fighting for Beginners")
+            {
+                Id = Guid.Parse("a3f1b8c0-6c71-4c75-9f3c-9a6c7d2e1111"),
+                AuthorId = Guid.Parse("d28888e9-2ba9-473a-a40f-e38cb54f9b35"),
+                Description = "Every pirate needs to know how to swing a sword without losing a finger. In this course you'll learn the basics of sword fighting and how to look intimidating while doing it."
+            },
+            new Course("Treasure Map Reading 101")
+            {
+                Id = Guid.Parse("b7d4f20c-89b4-41c3-92af-1e8a3d7e2222"),
+                AuthorId = Guid.Parse("2902b665-1190-4c70-9915-b9c2d7680450"),
+                Description = "Not all X's mark the spot. Learn how to read treasure maps, decipher pirate symbols, and avoid digging holes in the wrong places."
+            },
+            new Course("Advanced Parrot Communication")
+            {
+                Id = Guid.Parse("c8a73f95-02c4-4d16-9a9b-3f4b5e9a3333"),
+                AuthorId = Guid.Parse("da2fd609-d754-4feb-8acd-c4f9ff13ba96"),
+                Description = "A good pirate listens to their parrot. In this course you'll learn how to understand, train, and occasionally negotiate with your feathered companion."
+            },
+            new Course("Storm Navigation Mastery")
+            {
+                Id = Guid.Parse("d91f3c62-8e1a-4a70-b9b7-7c2d6a1b4444"),
+                AuthorId = Guid.Parse("d28888e9-2ba9-473a-a40f-e38cb54f9b35"),
+                Description = "Storms can sink ships and spirits alike. Learn the techniques pirates use to survive raging seas and keep their treasure dry."
+            },
+            new Course("Hidden Treasure Logistics")
+            {
+                Id = Guid.Parse("e24a7d80-ff5e-4e63-8e57-5a8d0c2c5555"),
+                AuthorId = Guid.Parse("2902b665-1190-4c70-9915-b9c2d7680450"),
+                Description = "Burying treasure is easy. Remembering where you buried it is harder. This course covers proper treasure storage, secrecy, and retrieval strategies."
+            },
+            new Course("Pirate Negotiation Tactics")
+            {
+                Id = Guid.Parse("f3b9c1de-22fa-4a0b-96e6-2d9e4f6f6666"),
+                AuthorId = Guid.Parse("da2fd609-d754-4feb-8acd-c4f9ff13ba96"),
+                Description = "Not every encounter needs to end in cannon fire. Learn how pirates negotiate, bluff, and occasionally walk away with more treasure than they started with."
+            },
+            new Course("Cannon Operation and Safety")
+            {
+                Id = Guid.Parse("10c5e7a1-1b44-4b68-83b8-9d1a2b3c7777"),
+                AuthorId = Guid.Parse("d28888e9-2ba9-473a-a40f-e38cb54f9b35"),
+                Description = "Cannons are powerful tools of persuasion. This course teaches you how to load, aim, and fire cannons without accidentally sinking your own ship."
+            },
+            new Course("Night Raids and Silent Boarding")
+            {
+                Id = Guid.Parse("21d6f8b2-2c55-4c79-94c9-a2b3c4d58888"),
+                AuthorId = Guid.Parse("2902b665-1190-4c70-9915-b9c2d7680450"),
+                Description = "Some of the best pirate victories happen under the cover of darkness. Learn stealth boarding techniques and how to move quietly across a creaky deck."
+            },
+            new Course("Rum Brewing Fundamentals")
+            {
+                Id = Guid.Parse("32e709c3-3d66-4d8a-a5da-b3c4d5e69999"),
+                AuthorId = Guid.Parse("da2fd609-d754-4feb-8acd-c4f9ff13ba96"),
+                Description = "A pirate crew runs on rum. In this course you'll learn the basics of brewing, storing, and protecting your precious barrels from thirsty crewmates."
+            },
+            new Course("Surviving on Deserted Islands")
+            {
+                Id = Guid.Parse("43f81ad4-4e77-4e9b-b6eb-c4d5e6f7aaaa"),
+                AuthorId = Guid.Parse("d28888e9-2ba9-473a-a40f-e38cb54f9b35"),
+                Description = "Sometimes things don't go according to plan. Learn essential survival skills for when you're stranded on a deserted island with nothing but a shovel and bad luck."
+            }
+        );
 
         // fix to allow sorting on DateTimeOffset when using Sqlite, based on
         // https://blog.dangl.me/archive/handling-datetimeoffset-in-sqlite-with-entity-framework-core/

@@ -7,7 +7,7 @@ public class Course
 {
     [Key]
     public Guid Id { get; set; }
-     
+
     [Required]
     [MaxLength(100)]
     public string Title { get; set; }
@@ -22,7 +22,7 @@ public class Course
 
     public Course(string title)
     {
-        Title = title; 
+        Title = title;
     }
 }
 

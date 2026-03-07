@@ -4,6 +4,9 @@ using CourseLibrary.API.Models;
 using CourseLibrary.API.ResourceParameters;
 using CourseLibrary.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace CourseLibrary.API.Controllers;
@@ -14,22 +17,31 @@ public class AuthorsController : ControllerBase
 {
     private readonly ICourseLibraryRepository _courseLibraryRepository;
     private readonly IMapper _mapper;
+    private readonly IPropertyMappingService _propertyMappingService;
 
     public AuthorsController(
         ICourseLibraryRepository courseLibraryRepository,
-        IMapper mapper)
+        IMapper mapper,
+        IPropertyMappingService propertyMappingService)
     {
         _courseLibraryRepository = courseLibraryRepository ??
             throw new ArgumentNullException(nameof(courseLibraryRepository));
         _mapper = mapper ??
             throw new ArgumentNullException(nameof(mapper));
+        _propertyMappingService = propertyMappingService ??
+            throw new ArgumentNullException(nameof(propertyMappingService));
     }
 
     [HttpGet(Name = "GetAuthors")]
     [HttpHead]
     public async Task<ActionResult<IEnumerable<AuthorDto>>> GetAuthors(
-      [FromQuery] AuthorsResourceParameters authorsResourceParameters)
+        [FromQuery] AuthorsResourceParameters authorsResourceParameters)
     {
+        if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Entities.Author>(authorsResourceParameters.OrderBy))
+        {
+            return BadRequest();
+        }
+
         // get authors from repo
         var authorsFromRepo = await _courseLibraryRepository
             .GetAuthorsAsync(authorsResourceParameters);
@@ -70,7 +82,8 @@ public class AuthorsController : ControllerBase
                     pageNumber = authorsResourceParameters.PageNumber - 1,
                     pageSize = authorsResourceParameters.PageSize,
                     mainCategory = authorsResourceParameters.MainCategory,
-                    searchQuery = authorsResourceParameters.SearchQuery
+                    searchQuery = authorsResourceParameters.SearchQuery,
+                    orderBy = authorsResourceParameters.OrderBy
                 }),
             ResourceUriType.NextPage => Url.Link("GetAuthors",
                 new
@@ -78,7 +91,8 @@ public class AuthorsController : ControllerBase
                     pageNumber = authorsResourceParameters.PageNumber + 1,
                     pageSize = authorsResourceParameters.PageSize,
                     mainCategory = authorsResourceParameters.MainCategory,
-                    searchQuery = authorsResourceParameters.SearchQuery
+                    searchQuery = authorsResourceParameters.SearchQuery,
+                    orderBy = authorsResourceParameters.OrderBy
                 }),
             _ => Url.Link("GetAuthors",
                 new
@@ -86,7 +100,8 @@ public class AuthorsController : ControllerBase
                     pageNumber = authorsResourceParameters.PageNumber,
                     pageSize = authorsResourceParameters.PageSize,
                     mainCategory = authorsResourceParameters.MainCategory,
-                    searchQuery = authorsResourceParameters.SearchQuery
+                    searchQuery = authorsResourceParameters.SearchQuery,
+                    orderBy = authorsResourceParameters.OrderBy
                 }),
         };
     }
@@ -126,5 +141,12 @@ public class AuthorsController : ControllerBase
     {
         Response.Headers.Append("Allow", "GET, HEAD, POST");
         return NoContent();
+    }
+
+    public override ActionResult ValidationProblem([ActionResultObjectValue] ModelStateDictionary modelStateDictionary)
+    {
+        var options = HttpContext.RequestServices.GetRequiredService<IOptions<ApiBehaviorOptions>>();
+
+        return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
     }
 }

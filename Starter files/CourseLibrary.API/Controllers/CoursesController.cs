@@ -1,16 +1,19 @@
 ﻿using AutoMapper;
+using CourseLibrary.API.Helpers;
 using CourseLibrary.API.Models;
+using CourseLibrary.API.ResourceParameters;
 using CourseLibrary.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace CourseLibrary.API.Controllers;
 
 [ApiController]
-[Route("api/authors/{authorId}/courses")]
+[Route("api")]
 public class CoursesController : ControllerBase
 {
     private readonly ICourseLibraryRepository _courseLibraryRepository;
@@ -25,7 +28,66 @@ public class CoursesController : ControllerBase
             throw new ArgumentNullException(nameof(mapper));
     }
 
-    [HttpGet]
+    [HttpGet("courses", Name = "GetCourses")]
+    public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourses(
+        [FromQuery] CoursesResourceParameters coursesResourceParameters)
+    {
+        var coursesFromRepo = await _courseLibraryRepository.GetCoursesAsync(coursesResourceParameters);
+
+        var previousPageLink = coursesFromRepo.HasPrevious
+            ? CreateCoursesResourceUri(coursesResourceParameters, ResourceUriType.PreviousPage)
+            : null;
+
+        var nextPageLink = coursesFromRepo.HasNext
+            ? CreateCoursesResourceUri(coursesResourceParameters, ResourceUriType.NextPage)
+            : null;
+
+        var paginationMetadata = new
+        {
+            totalCount = coursesFromRepo.TotalCount,
+            pageSize = coursesFromRepo.PageSize,
+            currentPage = coursesFromRepo.CurrentPage,
+            totalPages = coursesFromRepo.TotalPages,
+            previousPageLink,
+            nextPageLink
+        };
+
+        Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
+
+        return Ok(_mapper.Map<IEnumerable<CourseDto>>(coursesFromRepo));
+    }
+
+    private string? CreateCoursesResourceUri(
+        CoursesResourceParameters coursesResourceParameters,
+        ResourceUriType type)
+    {
+        switch (type)
+        {
+            case ResourceUriType.PreviousPage:
+                return Url.Link("GetCourses",
+                    new
+                    {
+                        pageNumber = coursesResourceParameters.PageNumber - 1,
+                        pageSize = coursesResourceParameters.PageSize
+                    });
+            case ResourceUriType.NextPage:
+                return Url.Link("GetCourses",
+                    new
+                    {
+                        pageNumber = coursesResourceParameters.PageNumber + 1,
+                        pageSize = coursesResourceParameters.PageSize
+                    });
+            default:
+                return Url.Link("GetCourses",
+                    new
+                    {
+                        pageNumber = coursesResourceParameters.PageNumber,
+                        pageSize = coursesResourceParameters.PageSize
+                    });
+        }
+    }
+
+    [HttpGet("authors/{authorId}/courses")]
     public async Task<ActionResult<IEnumerable<CourseDto>>> GetCoursesForAuthor(Guid authorId)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
@@ -37,7 +99,7 @@ public class CoursesController : ControllerBase
         return Ok(_mapper.Map<IEnumerable<CourseDto>>(coursesForAuthorFromRepo));
     }
 
-    [HttpGet("{courseId}", Name = "GetCourseForAuthor")]
+    [HttpGet("authors/{authorId}/courses/{courseId}", Name = "GetCourseForAuthor")]
     public async Task<ActionResult<CourseDto>> GetCourseForAuthor(Guid authorId, Guid courseId)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
@@ -55,7 +117,7 @@ public class CoursesController : ControllerBase
     }
 
 
-    [HttpPost]
+    [HttpPost("authors/{authorId}/courses")]
     public async Task<ActionResult<CourseDto>> CreateCourseForAuthor(
             Guid authorId, CourseForCreationDto course)
     {
@@ -73,7 +135,7 @@ public class CoursesController : ControllerBase
     }
 
 
-    [HttpPatch("{courseId}")]
+    [HttpPatch("authors/{authorId}/courses/{courseId}")]
     public async Task<IActionResult> PartiallyUpdateCourseForAuthor(
         Guid authorId,
         Guid courseId,
@@ -126,7 +188,7 @@ public class CoursesController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("{courseId}")]
+    [HttpPut("authors/{authorId}/courses/{courseId}")]
     public async Task<IActionResult> UpdateCourseForAuthor(
         Guid authorId,
         Guid courseId,
@@ -162,7 +224,7 @@ public class CoursesController : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{courseId}")]
+    [HttpDelete("authors/{authorId}/courses/{courseId}")]
     public async Task<ActionResult> DeleteCourseForAuthor(Guid authorId, Guid courseId)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
