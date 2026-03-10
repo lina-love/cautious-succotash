@@ -87,7 +87,7 @@ public class CoursesController : ControllerBase
         }
     }
 
-    [HttpGet("authors/{authorId}/courses")]
+    [HttpGet("authors/{authorId}/courses", Name = "GetCoursesForAuthor")]
     public async Task<ActionResult<IEnumerable<CourseDto>>> GetCoursesForAuthor(Guid authorId)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
@@ -117,7 +117,7 @@ public class CoursesController : ControllerBase
     }
 
 
-    [HttpPost("authors/{authorId}/courses")]
+    [HttpPost("authors/{authorId}/courses", Name = "CreateCourseForAuthor")]
     public async Task<ActionResult<CourseDto>> CreateCourseForAuthor(
             Guid authorId, CourseForCreationDto course)
     {
