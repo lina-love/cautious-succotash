@@ -17,6 +17,11 @@ internal static class StartupHelperExtensions
         builder.Services.AddControllers(configure =>
         {
             configure.ReturnHttpNotAcceptable = true;
+            configure.CacheProfiles.Add("240SecondsCacheProfile",
+                new()
+                {
+                    Duration = 240
+                });
         })
             .AddNewtonsoftJson(setupAction =>
             {
@@ -76,6 +81,8 @@ internal static class StartupHelperExtensions
         builder.Services.AddAutoMapper(
             AppDomain.CurrentDomain.GetAssemblies());
 
+        builder.Services.AddResponseCaching();
+
         return builder.Build();
     }
 
@@ -94,6 +101,8 @@ internal static class StartupHelperExtensions
                 await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
             }));
         }
+
+        app.UseResponseCaching();
 
         app.UseAuthorization();
 
