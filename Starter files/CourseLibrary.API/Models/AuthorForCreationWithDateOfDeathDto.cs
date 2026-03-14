@@ -1,12 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CourseLibrary.API.Entities;
+namespace CourseLibrary.API.Models;
 
-public class Author
+public class AuthorForCreationWithDateOfDeathDto
 {
-    [Key]
-    public Guid Id { get; set; }
-
     [Required]
     [MaxLength(50)]
     public string FirstName { get; set; }
@@ -24,14 +21,5 @@ public class Author
     [MaxLength(50)]
     public string MainCategory { get; set; }
 
-    public ICollection<Course> Courses { get; set; }
-        = new List<Course>();
-
-    public Author(string firstName, string lastName, string mainCategory)
-    {
-        FirstName = firstName;
-        LastName = lastName;
-        MainCategory = mainCategory;
-    }
+    public ICollection<CourseForCreationDto> Courses { get; set; } = new List<CourseForCreationDto>();
 }
-
