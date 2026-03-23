@@ -83,6 +83,18 @@ internal static class StartupHelperExtensions
 
         builder.Services.AddResponseCaching();
 
+        //builder.Services.AddHttpCacheHeaders((expirationModelOptions) =>
+        //    {
+        //        expirationModelOptions.MaxAge = 5;
+        //        expirationModelOptions.CacheLocation = CacheLocation.Private;
+        //    },
+        //    (validationModelOptions) =>
+        //    {
+        //        validationModelOptions.MustRevalidate = true;
+        //    });
+
+        builder.Services.AddHttpCacheHeaders();
+
         return builder.Build();
     }
 
@@ -102,7 +114,9 @@ internal static class StartupHelperExtensions
             }));
         }
 
-        app.UseResponseCaching();
+        // app.UseResponseCaching();
+
+        app.UseHttpCacheHeaders();
 
         app.UseAuthorization();
 

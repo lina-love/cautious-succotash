@@ -3,6 +3,7 @@ using CourseLibrary.API.Helpers;
 using CourseLibrary.API.Models;
 using CourseLibrary.API.ResourceParameters;
 using CourseLibrary.API.Services;
+using Marvin.Cache.Headers;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -14,19 +15,30 @@ namespace CourseLibrary.API.Controllers;
 
 [ApiController]
 [Route("api")]
-[ResponseCache(CacheProfileName = "240SecondsCacheProfile")]
+// [ResponseCache(CacheProfileName = "240SecondsCacheProfile")]
 public class CoursesController : ControllerBase
 {
     private readonly ICourseLibraryRepository _courseLibraryRepository;
     private readonly IMapper _mapper;
+    // private readonly IValidatorValueInvalidator _invalidator;
+    // private readonly IValidatorValueStore _validator;
 
-    public CoursesController(ICourseLibraryRepository courseLibraryRepository,
-        IMapper mapper)
+    public CoursesController(
+        ICourseLibraryRepository courseLibraryRepository,
+        IMapper mapper
+        //,
+        //IValidatorValueInvalidator invalidator,
+        //IValidatorValueStore validator
+        )
     {
         _courseLibraryRepository = courseLibraryRepository ??
             throw new ArgumentNullException(nameof(courseLibraryRepository));
         _mapper = mapper ??
             throw new ArgumentNullException(nameof(mapper));
+        //_invalidator = invalidator ??
+        //    throw new ArgumentNullException(nameof(invalidator));
+        //_validator = validator ??
+        //    throw new ArgumentNullException(nameof(validator));
     }
 
     [HttpGet("courses", Name = "GetCourses")]
@@ -89,6 +101,8 @@ public class CoursesController : ControllerBase
     }
 
     [HttpGet("authors/{authorId}/courses", Name = "GetCoursesForAuthor")]
+    [HttpCacheExpiration(CacheLocation = CacheLocation.Public, MaxAge = 5)]
+    [HttpCacheValidation(MustRevalidate = true)]
     public async Task<ActionResult<IEnumerable<CourseDto>>> GetCoursesForAuthor(Guid authorId)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
@@ -221,6 +235,10 @@ public class CoursesController : ControllerBase
 
         _courseLibraryRepository.UpdateCourse(courseForAuthorFromRepo);
         await _courseLibraryRepository.SaveAsync();
+
+        //var storeKey = await _validator.FindStoreKeysByKeyPartAsync($"authors/{authorId}/courses/{courseId}");
+
+        //await _invalidator.MarkForInvalidation(storeKey);
 
         return NoContent();
     }
